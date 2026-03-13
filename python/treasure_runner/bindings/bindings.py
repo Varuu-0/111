@@ -2,6 +2,7 @@ import ctypes
 from enum import IntEnum
 
 # --- Enums ---
+# Python representations of status codes returned by the C backend
 class Status(IntEnum):
     OK = 0
     INVALID_ARGUMENT = 1
@@ -16,6 +17,8 @@ class Status(IntEnum):
     WL_ERR_CONFIG = 10
     WL_ERR_DATAGEN = 11
 
+
+# Directions used when calling the C movement functions
 class Direction(IntEnum):
     NORTH = 0
     SOUTH = 1
@@ -24,6 +27,7 @@ class Direction(IntEnum):
 
 
 # --- Structs ---
+# Python mapping of the C Treasure struct using ctypes
 class Treasure(ctypes.Structure):
     _fields_ = [
         ("id", ctypes.c_int),
@@ -36,15 +40,19 @@ class Treasure(ctypes.Structure):
         ("collected", ctypes.c_bool),
     ]
 
-# Opaque Pointers
+
+# Opaque pointers representing C structs whose internal layout we don't access in Python
 GameEngine = ctypes.c_void_p
 Player = ctypes.c_void_p
 Room = ctypes.c_void_p
 
+
 def setup_bindings(lib):
+    # Configure ctypes argument and return types for all backend functions
+
     # Game Engine Lifecycle
     lib.game_engine_create.argtypes = [ctypes.c_char_p, ctypes.POINTER(GameEngine)]
-    lib.game_engine_create.restype = ctypes.c_int  # Returns Status
+    lib.game_engine_create.restype = ctypes.c_int  # returns Status
 
     lib.game_engine_destroy.argtypes = [GameEngine]
     lib.game_engine_destroy.restype = None
@@ -84,13 +92,14 @@ def setup_bindings(lib):
     lib.player_has_collected_treasure.argtypes = [Player, ctypes.c_int]
     lib.player_has_collected_treasure.restype = ctypes.c_bool
 
+    #returns a pointer to an array of pointers to Treasure structs
     lib.player_get_collected_treasures.argtypes = [Player, ctypes.POINTER(ctypes.c_int)]
     lib.player_get_collected_treasures.restype = ctypes.POINTER(ctypes.POINTER(Treasure))
 
     lib.player_reset_to_start.argtypes = [Player, ctypes.c_int, ctypes.c_int, ctypes.c_int]
     lib.player_reset_to_start.restype = ctypes.c_int
 
-    # Memory Helpers
+    # Memory Helpers (used when C allocates memory returned to Python)
     lib.game_engine_free_string.argtypes = [ctypes.c_void_p]
     lib.game_engine_free_string.restype = None
 
